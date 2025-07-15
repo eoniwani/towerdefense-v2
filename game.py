@@ -57,6 +57,11 @@ class Game:
         
         # 최고 점수 로드
         self.high_score = self.load_high_score()
+        
+        # 커서 설정
+        self.default_cursor = pygame.SYSTEM_CURSOR_ARROW
+        self.hand_cursor = pygame.SYSTEM_CURSOR_HAND
+        self.update_cursor()
     
     def get_korean_font(self, size):
         korean_fonts = [
@@ -96,6 +101,13 @@ class Game:
         except:
             pass
         return 0
+    
+    def update_cursor(self):
+        """타워 건설 모드에 따라 커서 모양 변경"""
+        if self.tower_build_mode:
+            pygame.mouse.set_cursor(self.hand_cursor)
+        else:
+            pygame.mouse.set_cursor(self.default_cursor)
     
     def save_high_score(self):
         try:
@@ -141,6 +153,7 @@ class Game:
                         if current_time - self.last_click_time > self.click_debounce_time:
                             self.last_click_time = current_time
                             self.tower_build_mode = not self.tower_build_mode
+                            self.update_cursor()  # 커서 모양 업데이트
                     # 타워 건설 모드가 활성화되어 있으면 직접 타워 배치 (디바운싱 없음)
                     elif self.tower_build_mode:
                         print(f"건설 모드에서 클릭: 위치({mouse_x}, {mouse_y}), 돈: {self.money}")  # 디버깅
@@ -251,11 +264,29 @@ class Game:
             mouse_x, mouse_y = pygame.mouse.get_pos()
             # UI 영역이 아닌 곳에만 범위 표시
             if not (mouse_x < 200 and mouse_y < 320):
-                # 임시 타워 객체 생성 대신 하드코딩된 값 사용
+                # 타워 범위 원 그리기
                 tower_range = 100
                 tower_radius = 20
-                pygame.draw.circle(self.screen, (0, 255, 0, 80), (mouse_x, mouse_y), tower_range, 2)
-                pygame.draw.circle(self.screen, (0, 255, 0), (mouse_x, mouse_y), tower_radius, 1)
+                
+                # 반투명 범위 원 (공격 가능 범위)
+                range_surface = pygame.Surface((tower_range * 2, tower_range * 2), pygame.SRCALPHA)
+                pygame.draw.circle(range_surface, (0, 255, 0, 60), (tower_range, tower_range), tower_range)
+                self.screen.blit(range_surface, (mouse_x - tower_range, mouse_y - tower_range))
+                
+                # 범위 테두리 원
+                pygame.draw.circle(self.screen, (0, 255, 0), (mouse_x, mouse_y), tower_range, 2)
+                
+                # 타워 위치 표시 (이미지 또는 원)
+                if Tower.tower_image is not None:
+                    # 타워 이미지가 있으면 반투명하게 표시
+                    tower_preview = Tower.tower_image.copy()
+                    tower_preview.set_alpha(150)  # 반투명 효과
+                    image_rect = tower_preview.get_rect(center=(mouse_x, mouse_y))
+                    self.screen.blit(tower_preview, image_rect)
+                else:
+                    # 이미지가 없으면 기존 원으로 표시
+                    pygame.draw.circle(self.screen, (0, 255, 0), (mouse_x, mouse_y), tower_radius, 2)
+                    pygame.draw.circle(self.screen, (0, 255, 0, 100), (mouse_x, mouse_y), tower_radius)
         self.draw_ui()
         pygame.display.flip()
     
