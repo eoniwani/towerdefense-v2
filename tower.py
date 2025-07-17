@@ -18,7 +18,7 @@ class Tower:
         self.last_shot = 0
         self.radius = 20
         self.color = BLUE
-        self.cost = 500
+        self.cost = 400
         
         # 타워 이미지 로드 (첫 번째 타워 생성 시에만)
         if Tower.tower_image is None:

@@ -42,6 +42,7 @@ class Game:
         self.enemies_in_wave = 30  # 기존 15에서 2배로 증가
         self.enemies_spawned = 0
         self.boss_spawned = False
+        self.bosses_spawned = 0
         # self.boss_spawn_point = random.randint(int(self.enemies_in_wave * 0.3), int(self.enemies_in_wave * 0.7))
         
         # 한글 지원 폰트 설정
@@ -53,7 +54,7 @@ class Game:
         self.tower_build_mode = True  # 기본적으로 타워 건설 모드 활성화
         self.last_click_time = 0
         self.click_debounce_time = 100  # 100ms 디바운싱
-        self.tower_cost = 500  # 타워 비용을 상수로 정의
+        self.tower_cost = 400  # 타워 비용을 상수로 정의
         
         # 최고 점수 로드
         self.high_score = self.load_high_score()
@@ -117,10 +118,14 @@ class Game:
             pass
     
     def spawn_enemy(self):
-        # 웨이브 시작 시 보스가 아직 안 나왔으면 바로 스폰
-        if not self.boss_spawned:
-            boss = Enemy(0, 350, 4)  # 미니보스 타입
-            self.enemies.append(boss)
+        # 웨이브 중간에 보스 스폰 (50% 지점에서)
+        boss_spawn_point = int(self.enemies_in_wave * 0.5)
+        if not self.boss_spawned and self.enemies_spawned >= boss_spawn_point:
+            # 웨이브 번호만큼 보스 스폰
+            for i in range(self.wave):
+                boss = Enemy(0, 350, 4)  # 미니보스 타입
+                self.enemies.append(boss)
+                self.bosses_spawned += 1
             self.boss_spawned = True
         if self.enemies_spawned < self.enemies_in_wave:
             if self.enemy_spawn_timer <= 0:
@@ -208,7 +213,9 @@ class Game:
             self.wave += 1
             self.enemies_spawned = 0
             self.boss_spawned = False
-            self.enemies_in_wave += min(20 + self.wave * 4, 60)
+            self.bosses_spawned = 0
+            # 웨이브 진행 시 몬스터 수 1.5배 증가
+            self.enemies_in_wave = int(self.enemies_in_wave * 1.5)
             self.money += 50
     
     def draw_path(self):

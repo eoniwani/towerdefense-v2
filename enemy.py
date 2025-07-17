@@ -46,7 +46,7 @@ class Enemy:
         else:  # enemy_type == 4 (미니 보스)
             self.health = 200
             self.max_health = 200
-            self.speed = 1
+            self.speed = 1.8
             self.color = BLACK
             self.reward = 100
             self.radius = 25
@@ -71,14 +71,32 @@ class Enemy:
             else:
                 print(f"적 이미지 파일을 찾을 수 없음: {image_path}")
             
-            # enemy2.png 로드 (타입 2용)
-            image_path_2 = os.path.join("assets", "enemy2.png")
+            # enemy_2.png 로드 (타입 2용)
+            image_path_2 = os.path.join("assets", "enemy_2.png")
             if os.path.exists(image_path_2):
                 original_image_2 = pygame.image.load(image_path_2)
                 Enemy.enemy_images[2] = pygame.transform.scale(original_image_2, (45, 45))
                 print(f"적 이미지 로드 완료: {image_path_2}")
             else:
                 print(f"적 이미지 파일을 찾을 수 없음: {image_path_2}")
+            
+            # enemy_3.png 로드 (타입 3용)
+            image_path_3 = os.path.join("assets", "enemy_3.png")
+            if os.path.exists(image_path_3):
+                original_image_3 = pygame.image.load(image_path_3)
+                Enemy.enemy_images[3] = pygame.transform.scale(original_image_3, (45, 45))
+                print(f"적 이미지 로드 완료: {image_path_3}")
+            else:
+                print(f"적 이미지 파일을 찾을 수 없음: {image_path_3}")
+            
+            # enemy_boss.png 로드 (타입 4용)
+            image_path_boss = os.path.join("assets", "enemy_boss.png")
+            if os.path.exists(image_path_boss):
+                original_image_boss = pygame.image.load(image_path_boss)
+                Enemy.enemy_images[4] = pygame.transform.scale(original_image_boss, (70, 70))
+                print(f"보스 이미지 로드 완료: {image_path_boss}")
+            else:
+                print(f"보스 이미지 파일을 찾을 수 없음: {image_path_boss}")
                 
             # 다른 적 타입들도 같은 이미지 사용 (색상 변경)
             if 1 in Enemy.enemy_images:
@@ -90,15 +108,17 @@ class Enemy:
                     purple_image.fill(PURPLE, special_flags=pygame.BLEND_MULT)
                     Enemy.enemy_images[2] = purple_image
                 
-                # 타입 3: 주황색 색조
-                orange_image = base_image.copy()
-                orange_image.fill(ORANGE, special_flags=pygame.BLEND_MULT)
-                Enemy.enemy_images[3] = orange_image
+                # 타입 3이 이미지 없으면 색상 변경 버전 사용
+                if 3 not in Enemy.enemy_images:
+                    orange_image = base_image.copy()
+                    orange_image.fill(ORANGE, special_flags=pygame.BLEND_MULT)
+                    Enemy.enemy_images[3] = orange_image
                 
-                # 타입 4 (보스): 검은색 색조 + 더 큰 사이즈
-                black_image = base_image.copy()
-                black_image.fill(BLACK, special_flags=pygame.BLEND_MULT)
-                Enemy.enemy_images[4] = pygame.transform.scale(black_image, (70, 70))
+                # 타입 4 (보스): 보스 이미지가 없으면 색상 변경 버전 사용
+                if 4 not in Enemy.enemy_images:
+                    black_image = base_image.copy()
+                    black_image.fill(BLACK, special_flags=pygame.BLEND_MULT)
+                    Enemy.enemy_images[4] = pygame.transform.scale(black_image, (70, 70))
                 
         except Exception as e:
             print(f"적 이미지 로드 실패: {e}")
