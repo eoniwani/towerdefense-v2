@@ -70,14 +70,25 @@ class Enemy:
                 print(f"적 이미지 로드 완료: {image_path}")
             else:
                 print(f"적 이미지 파일을 찾을 수 없음: {image_path}")
+            
+            # enemy2.png 로드 (타입 2용)
+            image_path_2 = os.path.join("assets", "enemy2.png")
+            if os.path.exists(image_path_2):
+                original_image_2 = pygame.image.load(image_path_2)
+                Enemy.enemy_images[2] = pygame.transform.scale(original_image_2, (45, 45))
+                print(f"적 이미지 로드 완료: {image_path_2}")
+            else:
+                print(f"적 이미지 파일을 찾을 수 없음: {image_path_2}")
                 
             # 다른 적 타입들도 같은 이미지 사용 (색상 변경)
             if 1 in Enemy.enemy_images:
                 base_image = Enemy.enemy_images[1]
-                # 타입 2: 보라색 색조
-                purple_image = base_image.copy()
-                purple_image.fill(PURPLE, special_flags=pygame.BLEND_MULT)
-                Enemy.enemy_images[2] = purple_image
+                
+                # 타입 2가 이미지 없으면 색상 변경 버전 사용
+                if 2 not in Enemy.enemy_images:
+                    purple_image = base_image.copy()
+                    purple_image.fill(PURPLE, special_flags=pygame.BLEND_MULT)
+                    Enemy.enemy_images[2] = purple_image
                 
                 # 타입 3: 주황색 색조
                 orange_image = base_image.copy()

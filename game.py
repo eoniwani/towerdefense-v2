@@ -53,7 +53,7 @@ class Game:
         self.tower_build_mode = True  # 기본적으로 타워 건설 모드 활성화
         self.last_click_time = 0
         self.click_debounce_time = 100  # 100ms 디바운싱
-        self.tower_cost = 400  # 타워 비용을 상수로 정의
+        self.tower_cost = 450  # 타워 비용을 상수로 정의
         
         # 최고 점수 로드
         self.high_score = self.load_high_score()
