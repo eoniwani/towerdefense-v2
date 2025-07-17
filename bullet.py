@@ -2,6 +2,7 @@ import math
 import pygame
 
 YELLOW = (255, 255, 0)
+BLACK = (0, 0, 0)
 
 class Bullet:
     def __init__(self, x, y, target_x, target_y, damage):
@@ -10,7 +11,7 @@ class Bullet:
         self.target_x = target_x
         self.target_y = target_y
         self.damage = damage
-        self.speed = 8
+        self.speed = 5
         self.radius = 10
         
         # 목표까지의 방향 계산
@@ -30,7 +31,7 @@ class Bullet:
         self.y += self.vel_y
     
     def draw(self, screen):
-        pygame.draw.circle(screen, YELLOW, (int(self.x), int(self.y)), self.radius)
+        pygame.draw.circle(screen, BLACK, (int(self.x), int(self.y)), self.radius)
     
     def hit_target(self, target):
         distance = math.sqrt((self.x - target.x)**2 + (self.y - target.y)**2)

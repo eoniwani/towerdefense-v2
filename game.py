@@ -183,6 +183,10 @@ class Game:
                 self.enemies.remove(enemy)
                 self.money += enemy.reward
                 self.score += enemy.reward * 10
+                # 실시간으로 최고 점수 갱신 및 저장
+                if self.score > self.high_score:
+                    self.high_score = self.score
+                    self.save_high_score()
         for tower in self.towers:
             target = tower.find_target(self.enemies)
             bullet = tower.shoot(target, self.frame_count)
