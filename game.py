@@ -33,7 +33,7 @@ class Game:
         self.towers = []
         self.bullets = []
         
-        self.money = 1500
+        self.money = 2000
         self.lives = 10
         self.score = 0
         self.wave = 1
@@ -54,10 +54,13 @@ class Game:
         self.tower_build_mode = True  # 기본적으로 타워 건설 모드 활성화
         self.last_click_time = 0
         self.click_debounce_time = 100  # 100ms 디바운싱
-        self.tower_cost = 400  # 타워 비용을 상수로 정의
+        self.tower_cost = 500  # 타워 비용을 상수로 정의
         
         # 최고 점수 로드
         self.high_score = self.load_high_score()
+        
+        # 게임 상태 관리
+        self.game_over = False
         
         # 커서 설정
         self.default_cursor = pygame.SYSTEM_CURSOR_ARROW
@@ -153,30 +156,42 @@ class Game:
                 current_time = pygame.time.get_ticks()
                 
                 if event.button == 1:
-                    # 타워 건설 모드 토글 버튼 클릭 (디바운싱 적용)
-                    if 10 <= mouse_x <= 160 and 250 <= mouse_y <= 290:
-                        if current_time - self.last_click_time > self.click_debounce_time:
-                            self.last_click_time = current_time
-                            self.tower_build_mode = not self.tower_build_mode
-                            self.update_cursor()  # 커서 모양 업데이트
-                    # 타워 건설 모드가 활성화되어 있으면 직접 타워 배치 (디바운싱 없음)
-                    elif self.tower_build_mode:
-                        print(f"건설 모드에서 클릭: 위치({mouse_x}, {mouse_y}), 돈: {self.money}")  # 디버깅
-                        
-                        if self.money >= self.tower_cost:
-                            # UI 영역만 제외하고 어디서나 타워 설치 가능
-                            if mouse_x < 200 and mouse_y < 320:
-                                print(f"UI 영역 제한: 클릭 위치가 UI 영역에 포함됨")
+                    # 게임 오버 상태에서 버튼 클릭 처리
+                    if self.game_over:
+                        # 재시작 버튼 클릭
+                        if SCREEN_WIDTH//2 - 100 <= mouse_x <= SCREEN_WIDTH//2 + 100 and SCREEN_HEIGHT//2 + 50 <= mouse_y <= SCREEN_HEIGHT//2 + 90:
+                            self.restart_game()
+                        # 종료 버튼 클릭
+                        elif SCREEN_WIDTH//2 - 100 <= mouse_x <= SCREEN_WIDTH//2 + 100 and SCREEN_HEIGHT//2 + 100 <= mouse_y <= SCREEN_HEIGHT//2 + 140:
+                            return False
+                    else:
+                        # 타워 건설 모드 토글 버튼 클릭 (디바운싱 적용)
+                        if 10 <= mouse_x <= 160 and 250 <= mouse_y <= 290:
+                            if current_time - self.last_click_time > self.click_debounce_time:
+                                self.last_click_time = current_time
+                                self.tower_build_mode = not self.tower_build_mode
+                                self.update_cursor()  # 커서 모양 업데이트
+                        # 타워 건설 모드가 활성화되어 있으면 직접 타워 배치 (디바운싱 없음)
+                        elif self.tower_build_mode:
+                            print(f"건설 모드에서 클릭: 위치({mouse_x}, {mouse_y}), 돈: {self.money}")  # 디버깅
+                            
+                            if self.money >= self.tower_cost:
+                                # UI 영역만 제외하고 어디서나 타워 설치 가능
+                                if mouse_x < 200 and mouse_y < 320:
+                                    print(f"UI 영역 제한: 클릭 위치가 UI 영역에 포함됨")
+                                else:
+                                    tower = Tower(mouse_x, mouse_y)
+                                    self.towers.append(tower)
+                                    self.money -= self.tower_cost
+                                    print(f"타워 건설 완료: 위치({mouse_x}, {mouse_y}), 남은 돈: {self.money}")
                             else:
-                                tower = Tower(mouse_x, mouse_y)
-                                self.towers.append(tower)
-                                self.money -= self.tower_cost
-                                print(f"타워 건설 완료: 위치({mouse_x}, {mouse_y}), 남은 돈: {self.money}")
-                        else:
-                            print(f"타워 건설 실패: 돈 부족 (현재: {self.money}, 필요: {self.tower_cost})")
+                                print(f"타워 건설 실패: 돈 부족 (현재: {self.money}, 필요: {self.tower_cost})")
         return True
     
     def update(self):
+        if self.game_over:
+            return
+            
         self.frame_count += 1
         self.spawn_enemy()
         for enemy in self.enemies[:]:
@@ -184,6 +199,11 @@ class Game:
             if enemy.reached_end():
                 self.enemies.remove(enemy)
                 self.lives -= 1
+                if self.lives <= 0:
+                    self.game_over = True
+                    if self.score > self.high_score:
+                        self.high_score = self.score
+                        self.save_high_score()
             elif enemy.health <= 0:
                 self.enemies.remove(enemy)
                 self.money += enemy.reward
@@ -256,10 +276,31 @@ class Game:
         else:
             controls_text = self.small_font.render("조작: 타워 건설 모드 버튼을 클릭한 후 원하는 위치를 클릭하여 타워 배치", True, BLACK)
         self.screen.blit(controls_text, (10, 650))
-        if self.lives <= 0:
-            game_over_text = self.font.render("게임 오버! ESC를 눌러 종료하세요", True, RED)
-            text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+        if self.game_over:
+            # 반투명 오버레이
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(128)
+            overlay.fill(BLACK)
+            self.screen.blit(overlay, (0, 0))
+            
+            # 게임 오버 텍스트
+            game_over_text = self.font.render("게임 오버!", True, RED)
+            text_rect = game_over_text.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
             self.screen.blit(game_over_text, text_rect)
+            
+            # 재시작 버튼
+            restart_button = pygame.Rect(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 50, 200, 40)
+            pygame.draw.rect(self.screen, GREEN, restart_button)
+            restart_text = self.small_font.render("재시작", True, WHITE)
+            restart_text_rect = restart_text.get_rect(center=restart_button.center)
+            self.screen.blit(restart_text, restart_text_rect)
+            
+            # 종료 버튼
+            quit_button = pygame.Rect(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 100, 200, 40)
+            pygame.draw.rect(self.screen, RED, quit_button)
+            quit_text = self.small_font.render("종료", True, WHITE)
+            quit_text_rect = quit_text.get_rect(center=quit_button.center)
+            self.screen.blit(quit_text, quit_text_rect)
     
     def draw(self):
         self.screen.fill(WHITE)
@@ -301,16 +342,31 @@ class Game:
         self.draw_ui()
         pygame.display.flip()
     
+    def restart_game(self):
+        """게임을 재시작하는 함수"""
+        self.enemies = []
+        self.towers = []
+        self.bullets = []
+        self.money = 1500
+        self.lives = 10
+        self.score = 0
+        self.wave = 1
+        self.frame_count = 0
+        self.enemy_spawn_timer = 0
+        self.enemies_in_wave = 30
+        self.enemies_spawned = 0
+        self.boss_spawned = False
+        self.bosses_spawned = 0
+        self.game_over = False
+        self.selected_tower_pos = None
+        self.placing_tower = False
+        self.tower_build_mode = True
+    
     def run(self):
         running = True
-        while running and self.lives > 0:
+        while running:
             running = self.handle_events()
             self.update()
             self.draw()
             self.clock.tick(FPS)
-        if self.lives <= 0:
-            if self.score > self.high_score:
-                self.high_score = self.score
-                self.save_high_score()
-            pygame.time.wait(3000)
         pygame.quit() 
